@@ -5,6 +5,8 @@ const connectDB = require('./config/db');
 const { errorHandler, notFound } = require('./middlewares/errorMiddleware');
 const authRoutes = require('./routes/authRoutes');
 const testRoutes = require('./routes/testRoutes');
+const donationRoutes = require('./routes/donationRoutes');
+const path = require('path');
 
 // Load env vars
 dotenv.config();
@@ -37,6 +39,9 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+// Serve static files from the uploads directory
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 // Log requests in development
 if (process.env.NODE_ENV === 'development') {
   app.use((req, res, next) => {
@@ -48,6 +53,7 @@ if (process.env.NODE_ENV === 'development') {
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/test', testRoutes);
+app.use('/api/donations', donationRoutes);
 
 // Welcome route
 app.get('/', (req, res) => {

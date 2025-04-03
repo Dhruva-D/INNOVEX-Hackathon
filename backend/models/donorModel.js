@@ -1,6 +1,70 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 
+// Define Food Donation Schema
+const foodDonationSchema = new mongoose.Schema(
+  {
+    foodImageUrl: {
+      type: String,
+      required: false,
+    },
+    foodType: {
+      type: String,
+      required: true,
+      enum: [
+        'Vegetables', 
+        'Fruits', 
+        'Cooked Meals', 
+        'Bakery Items', 
+        'Canned Goods', 
+        'Dairy Products',
+        'Grains & Cereals',
+        'Beverages',
+        'Other'
+      ]
+    },
+    quantity: {
+      type: String,
+      required: true,
+    },
+    location: {
+      type: String,
+      required: true,
+    },
+    coordinates: {
+      lat: Number,
+      lng: Number,
+    },
+    expiryDate: {
+      type: Date,
+      required: true,
+    },
+    originalPrice: {
+      type: Number,
+      required: false,
+    },
+    status: {
+      type: String,
+      required: true,
+      enum: ['Available', 'Reserved', 'Collected', 'Expired'],
+      default: 'Available',
+    },
+    seeker: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'FoodSeeker',
+      required: false,
+    },
+    volunteer: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Volunteer',
+      required: false,
+    },
+  },
+  {
+    timestamps: true,
+  }
+);
+
 const donorSchema = mongoose.Schema(
   {
     name: {
@@ -19,7 +83,7 @@ const donorSchema = mongoose.Schema(
     password: {
       type: String,
       required: [true, 'Please add a password'],
-
+      minlength: [6, 'Password must be at least 6 characters'],
     },
     phone: {
       type: String,
@@ -33,6 +97,8 @@ const donorSchema = mongoose.Schema(
       type: String,
       default: 'donor',
     },
+    // Add donations array to track all donations by this donor
+    donations: [foodDonationSchema],
   },
   {
     timestamps: true,
@@ -69,6 +135,24 @@ donorSchema.methods.matchPassword = async function (enteredPassword) {
     throw error;
   }
 };
+
+// Virtual for active donations count
+donorSchema.virtual('activeDonationsCount').get(function() {
+  return this.donations.filter(donation => 
+    donation.status === 'Available' && new Date(donation.expiryDate) > new Date()
+  ).length;
+});
+
+// Virtual for completed donations count
+donorSchema.virtual('completedDonationsCount').get(function() {
+  return this.donations.filter(donation => 
+    donation.status === 'Collected'
+  ).length;
+});
+
+// Set virtuals to be included in JSON
+donorSchema.set('toJSON', { virtuals: true });
+donorSchema.set('toObject', { virtuals: true });
 
 const Donor = mongoose.model('Donor', donorSchema);
 

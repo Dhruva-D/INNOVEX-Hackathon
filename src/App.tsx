@@ -8,6 +8,7 @@ import SignUp from './pages/auth/SignUp';
 import DonorDashboard from './pages/dashboard/DonorDashboard';
 import SeekerDashboard from './pages/dashboard/SeekerDashboard';
 import VolunteerDashboard from './pages/dashboard/VolunteerDashboard';
+import AdminDashboard from './pages/dashboard/AdminDashboard';
 
 // Import components
 import ProtectedRoute from './components/ProtectedRoute';
@@ -23,7 +24,7 @@ function App() {
           <Route path="/signin" element={<SignIn />} />
           <Route path="/signup" element={<SignUp />} />
           
-          {/* Protected dashboard routes */}
+          {/* Protected homepage routes (internally still using dashboard paths for compatibility) */}
           <Route 
             path="/dashboard/donor" 
             element={
@@ -45,6 +46,16 @@ function App() {
             element={
               <ProtectedRoute requiredRole="volunteer">
                 <VolunteerDashboard />
+              </ProtectedRoute>
+            } 
+          />
+          
+          {/* Admin Dashboard routes */}
+          <Route 
+            path="/admin-dashboard/:userType" 
+            element={
+              <ProtectedRoute>
+                <AdminDashboard />
               </ProtectedRoute>
             } 
           />

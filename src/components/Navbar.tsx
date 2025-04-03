@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Heart, LogOut, User, Sun, Moon } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Heart, LogOut, User, Sun, Moon, Home, Menu, ChevronDown } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -7,6 +7,8 @@ const Navbar: React.FC = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Initialize theme preference from localStorage or system preference
   useEffect(() => {
@@ -23,6 +25,20 @@ const Navbar: React.FC = () => {
     }
   }, []);
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    }
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
   // Toggle theme function
   const toggleTheme = () => {
     const newTheme = isDarkMode ? 'light' : 'dark';
@@ -33,20 +49,26 @@ const Navbar: React.FC = () => {
 
   const handleSignOut = () => {
     signOut();
+    setIsDropdownOpen(false);
     navigate('/');
+  };
+
+  const getUserHomepageLink = () => {
+    if (!user) return '/';
+    return `/dashboard/${user.userType}`; // Keep the internal link the same for now
   };
 
   const getUserDashboardLink = () => {
     if (!user) return '/';
-    return `/dashboard/${user.role}`;
+    return `/admin-dashboard/${user.userType}`;
   };
 
   const getUserRoleLabel = () => {
     if (!user) return '';
     
-    switch (user.role) {
+    switch (user.userType) {
       case 'donor': return 'Donor';
-      case 'seeker': return 'Food Seeker';
+      case 'foodSeeker': return 'Food Seeker';
       case 'volunteer': return 'Volunteer';
       default: return '';
     }
@@ -63,6 +85,17 @@ const Navbar: React.FC = () => {
             </Link>
           </div>
           <div className="flex items-center space-x-4">
+            {/* Home Link - Only visible to logged in users */}
+            {user && (
+              <Link 
+                to={getUserHomepageLink()} 
+                className="flex items-center text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+              >
+                <Home className="h-5 w-5 mr-1" />
+                <span>Home</span>
+              </Link>
+            )}
+            
             {/* Theme Toggle Button */}
             <button
               onClick={toggleTheme}
@@ -77,19 +110,48 @@ const Navbar: React.FC = () => {
             </button>
             
             {user ? (
-              <>
-                <Link to={getUserDashboardLink()} className="flex items-center text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">
-                  <User className="h-5 w-5 mr-1" />
-                  <span>{user.fullName} ({getUserRoleLabel()})</span>
-                </Link>
+              <div className="relative" ref={dropdownRef}>
                 <button 
-                  onClick={handleSignOut}
-                  className="flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600 transition-all duration-300 transform hover:translate-y-[-2px] hover:shadow-lg"
+                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                  className="flex items-center text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
                 >
-                  <LogOut className="h-4 w-4 mr-1" />
-                  Sign Out
+                  <User className="h-5 w-5 mr-1" />
+                  <span className="mr-1">{user.name}</span>
+                  <span className="text-sm text-gray-500">({getUserRoleLabel()})</span>
+                  <ChevronDown className="h-4 w-4 ml-1" />
                 </button>
-              </>
+                
+                {/* Dropdown Menu */}
+                {isDropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 z-10">
+                    <div className="py-1" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
+                      <Link
+                        to={getUserHomepageLink()}
+                        className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                        role="menuitem"
+                        onClick={() => setIsDropdownOpen(false)}
+                      >
+                        <Home className="mr-2 h-4 w-4" /> Home
+                      </Link>
+                      <Link
+                        to={getUserDashboardLink()}
+                        className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                        role="menuitem"
+                        onClick={() => setIsDropdownOpen(false)}
+                      >
+                        <Menu className="mr-2 h-4 w-4" /> Dashboard
+                      </Link>
+                      <button
+                        onClick={handleSignOut}
+                        className="flex w-full items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                        role="menuitem"
+                      >
+                        <LogOut className="mr-2 h-4 w-4" /> Sign Out
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             ) : (
               <Link 
                 to="/signin" 

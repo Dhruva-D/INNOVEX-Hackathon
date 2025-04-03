@@ -28,9 +28,14 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredRole 
     return <Navigate to="/signin" state={{ from: location }} replace />;
   }
 
+  // Convert backend userType to frontend role for comparison
+  const userRole = user.userType === 'foodSeeker' ? 'seeker' : user.userType;
+
   // Check if user has the required role
-  if (requiredRole && user.role !== requiredRole) {
-    return <Navigate to={`/dashboard/${user.role}`} replace />;
+  if (requiredRole && userRole !== requiredRole) {
+    // Navigate to the user's homepage based on their role
+    const redirectPath = `/dashboard/${userRole === 'seeker' ? 'seeker' : userRole}`;
+    return <Navigate to={redirectPath} replace />;
   }
 
   // Render children if authenticated and has the required role

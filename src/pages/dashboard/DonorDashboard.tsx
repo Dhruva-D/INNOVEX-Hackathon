@@ -1,15 +1,30 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Navbar from '../../components/Navbar';
+import DonationForm from '../../components/DonationForm';
+import { ShoppingBag } from 'lucide-react';
 
 const DonorDashboard: React.FC = () => {
+  const [isDonationFormOpen, setIsDonationFormOpen] = useState(false);
+
+  const handleDonateClick = () => {
+    setIsDonationFormOpen(true);
+  };
+
+  const handleDonationSubmit = (formData: any) => {
+    // In a real application, this would send the data to the backend
+    console.log('Donation form submitted:', formData);
+    // You could also add a success notification here
+    alert('Thank you for your donation! Your contribution will help reduce food waste and feed those in need.');
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-green-50 to-white dark:from-gray-900 dark:to-gray-800 transition-all duration-300">
       <Navbar />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-24">
-        <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white mb-8">Donor Dashboard</h1>
+        <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white mb-8">Donor Homepage</h1>
         <div className="card-3d bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-lg transition-all duration-300">
           <div className="card-3d-content px-4 py-5 sm:px-6">
-            <h2 className="text-lg leading-6 font-medium text-gray-900 dark:text-white">Welcome to your donor dashboard</h2>
+            <h2 className="text-lg leading-6 font-medium text-gray-900 dark:text-white">Welcome to your donor homepage</h2>
             <p className="mt-1 max-w-2xl text-sm text-gray-500 dark:text-gray-300">
               From here, you can manage your donations and help reduce food waste.
             </p>
@@ -32,9 +47,13 @@ const DonorDashboard: React.FC = () => {
           </div>
         </div>
         
-        <div className="mt-8">
-          <button className="float-on-hover px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-300">
-            Create New Donation
+        <div className="mt-8 flex justify-center">
+          <button 
+            onClick={handleDonateClick}
+            className="donate-btn float-on-hover flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-xl text-white bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-500 transform hover:scale-105 hover:-translate-y-2 hover:rotate-1"
+          >
+            <ShoppingBag className="mr-2 h-5 w-5" />
+            Donate Food
           </button>
         </div>
 
@@ -50,13 +69,23 @@ const DonorDashboard: React.FC = () => {
                 </svg>
               </div>
               <p className="text-gray-600 dark:text-gray-300">You haven't made any donations yet</p>
-              <button className="mt-4 inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600">
+              <button 
+                onClick={handleDonateClick}
+                className="mt-4 inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600"
+              >
                 Start donating
               </button>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Donation Form Modal */}
+      <DonationForm 
+        isOpen={isDonationFormOpen} 
+        onClose={() => setIsDonationFormOpen(false)}
+        onSubmit={handleDonationSubmit}
+      />
     </div>
   );
 };
