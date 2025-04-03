@@ -1,3 +1,104 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* CSS Variables for Light/Dark Mode */
+:root {
+  /* Light mode (default) */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f9fafb;
+  --text-primary: #111827;
+  --text-secondary: #4b5563;
+  --accent-primary: #10b981;
+  --accent-secondary: #059669;
+  --border-color: #e5e7eb;
+  --card-bg: #ffffff;
+  --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --input-bg: #ffffff;
+  --input-border: #d1d5db;
+}
+
+[data-theme="dark"] {
+  /* Dark mode */
+  --bg-primary: #111827;
+  --bg-secondary: #1f2937;
+  --text-primary: #f9fafb;
+  --text-secondary: #d1d5db;
+  --accent-primary: #10b981;
+  --accent-secondary: #34d399;
+  --border-color: #374151;
+  --card-bg: #1f2937;
+  --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+  --input-bg: #374151;
+  --input-border: #4b5563;
+}
+
+/* Global styles and transitions */
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Smooth transition for all elements */
+* {
+  transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform;
+  transition-duration: 0.3s;
+}
+
+/* Animation classes */
+.float-on-hover {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.float-on-hover:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.rotate-on-hover {
+  transition: transform 0.5s ease;
+}
+
+.rotate-on-hover:hover {
+  transform: rotateY(10deg);
+}
+
+/* Extends Tailwind's dark mode to use our data-theme attribute */
+@layer utilities {
+  .dark\:bg-dark-bg {
+    @apply bg-gray-900;
+  }
+  .dark\:text-dark-text {
+    @apply text-white;
+  }
+}
+
+/* 3D card effect */
+.card-3d {
+  transform-style: preserve-3d;
+  perspective: 1000px;
+}
+
+.card-3d-content {
+  transition: transform 0.6s ease;
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+.card-3d:hover .card-3d-content {
+  transform: translateZ(20px) rotateX(2deg) rotateY(5deg);
+}
+
+/* Glassmorphism effect */
+.glass {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.dark .glass {
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
