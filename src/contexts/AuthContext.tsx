@@ -1,13 +1,17 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import { authApi } from '../services/api';
 
 // User types
 type UserRole = 'donor' | 'seeker' | 'volunteer';
 
 interface User {
-  id: string;
+  _id: string;
+  name: string;
   email: string;
-  fullName: string;
-  role: UserRole;
+  phone: string;
+  location: string;
+  userType: string;
+  token: string;
 }
 
 // Auth context type
@@ -32,58 +36,62 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
-  // Initialize auth - check for existing session (e.g., in localStorage)
-  React.useEffect(() => {
-    // In a real app, you would check for a token in localStorage or cookies
-    // and validate it with the server
+  // Initialize auth - check for existing session
+  useEffect(() => {
     const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
+    const token = localStorage.getItem('token');
+    
+    if (storedUser && token) {
+      try {
+        const parsedUser = JSON.parse(storedUser);
+        setUser(parsedUser);
+      } catch (error) {
+        // If there's an error parsing user data, clear localStorage
+        localStorage.removeItem('user');
+        localStorage.removeItem('token');
+      }
     }
+    
     setLoading(false);
   }, []);
 
   // Sign in function
   const signIn = async (email: string, password: string, role: UserRole): Promise<boolean> => {
     try {
-      // In a real app, you would make an API call to authenticate the user
-      // For now, we'll simulate a successful login
-      const mockUser: User = {
-        id: Math.random().toString(36).substring(2, 9),
-        email,
-        fullName: 'Test User',
-        role,
-      };
-
-      // Store user in state and localStorage
-      setUser(mockUser);
-      localStorage.setItem('user', JSON.stringify(mockUser));
+      setLoading(true);
+      const userData = await authApi.login(email, password, role);
+      
+      // Store token separately for easier access in API interceptor
+      localStorage.setItem('token', userData.token);
+      localStorage.setItem('user', JSON.stringify(userData));
+      
+      setUser(userData);
       return true;
     } catch (error) {
       console.error('Sign in error:', error);
       return false;
+    } finally {
+      setLoading(false);
     }
   };
 
   // Sign up function
   const signUp = async (userData: any, role: UserRole): Promise<boolean> => {
     try {
-      // In a real app, you would make an API call to create a new user
-      // For now, we'll simulate a successful registration
-      const mockUser: User = {
-        id: Math.random().toString(36).substring(2, 9),
-        email: userData.email,
-        fullName: userData.fullName,
-        role,
-      };
-
-      // Store user in state and localStorage
-      setUser(mockUser);
-      localStorage.setItem('user', JSON.stringify(mockUser));
+      setLoading(true);
+      const newUser = await authApi.register(userData, role);
+      
+      // Store token separately for easier access in API interceptor
+      localStorage.setItem('token', newUser.token);
+      localStorage.setItem('user', JSON.stringify(newUser));
+      
+      setUser(newUser);
       return true;
     } catch (error) {
       console.error('Sign up error:', error);
       return false;
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -92,6 +100,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Remove user from state and localStorage
     setUser(null);
     localStorage.removeItem('user');
+    localStorage.removeItem('token');
   };
 
   // Context value

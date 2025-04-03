@@ -19,7 +19,7 @@ const foodSeekerSchema = mongoose.Schema(
     password: {
       type: String,
       required: [true, 'Please add a password'],
-      minlength: [6, 'Password must be at least 6 characters'],
+
     },
     phone: {
       type: String,
@@ -49,18 +49,33 @@ const foodSeekerSchema = mongoose.Schema(
 
 // Hash password before saving
 foodSeekerSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) {
-    next();
-  }
+  try {
+    // Only hash the password if it's been modified (or is new)
+    if (!this.isModified('password')) {
+      return next();
+    }
 
-  const salt = await bcrypt.genSalt(10);
-  this.password = await bcrypt.hash(this.password, salt);
-  next();
+    console.log('Hashing password for food seeker user');
+    // Generate a salt
+    const salt = await bcrypt.genSalt(10);
+    
+    // Hash the password along with the new salt
+    this.password = await bcrypt.hash(this.password, salt);
+    next();
+  } catch (error) {
+    console.error('Error hashing password:', error);
+    next(error);
+  }
 });
 
 // Method to check if entered password matches the hashed password
 foodSeekerSchema.methods.matchPassword = async function (enteredPassword) {
-  return await bcrypt.compare(enteredPassword, this.password);
+  try {
+    return await bcrypt.compare(enteredPassword, this.password);
+  } catch (error) {
+    console.error('Error comparing passwords:', error);
+    throw error;
+  }
 };
 
 const FoodSeeker = mongoose.model('FoodSeeker', foodSeekerSchema);
