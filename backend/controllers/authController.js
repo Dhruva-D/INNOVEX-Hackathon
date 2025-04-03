@@ -1,7 +1,43 @@
 const Donor = require('../models/donorModel');
 const FoodSeeker = require('../models/foodSeekerModel');
 const Volunteer = require('../models/volunteerModel');
-const { generateToken } = require('../utils/jwtUtils');
+const { generateToken, verifyToken } = require('../utils/jwtUtils');
+
+// Protect middleware to verify JWT token
+const protect = async (req, res, next) => {
+  try {
+    // Get token from header
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+    
+    if (!token) {
+      return res.status(401).json({ message: 'No token, authorization denied' });
+    }
+
+    // Verify token
+    const decoded = verifyToken(token);
+    
+    // Get user based on userType
+    let user;
+    if (decoded.userType === 'donor') {
+      user = await Donor.findById(decoded.id).select('-password');
+    } else if (decoded.userType === 'foodSeeker') {
+      user = await FoodSeeker.findById(decoded.id).select('-password');
+    } else if (decoded.userType === 'volunteer') {
+      user = await Volunteer.findById(decoded.id).select('-password');
+    }
+
+    if (!user) {
+      return res.status(401).json({ message: 'User not found' });
+    }
+
+    // Add user and userType to request object
+    req.user = user;
+    req.userType = decoded.userType;
+    next();
+  } catch (error) {
+    res.status(401).json({ message: 'Token is not valid' });
+  }
+};
 
 // @desc    Register a new user
 // @route   POST /api/auth/signup
@@ -277,4 +313,5 @@ module.exports = {
   signup,
   login,
   getProfile,
+  protect
 }; 

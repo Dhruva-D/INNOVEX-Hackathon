@@ -4,7 +4,7 @@ import { Utensils, Users, Truck } from 'lucide-react';
 import Navbar from '../../components/Navbar';
 import { useAuth } from '../../contexts/AuthContext';
 
-type UserRole = 'donor' | 'seeker' | 'volunteer' | null;
+type SignUpRole = 'donor' | 'seeker' | 'volunteer' | null;
 
 // Common form fields interface
 interface FormFields {
@@ -25,6 +25,8 @@ interface DonorFields extends FormFields {
 
 interface SeekerFields extends FormFields {
   userType: 'individual' | 'organization' | 'ngo' | 'orphanage';
+  foodRequirements: string;
+  familySize: number;
 }
 
 interface VolunteerFields extends FormFields {
@@ -39,7 +41,7 @@ const SignUp: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { signUp } = useAuth();
-  const [role, setRole] = useState<UserRole>(null);
+  const [role, setRole] = useState<SignUpRole>(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   
@@ -59,12 +61,14 @@ const SignUp: React.FC = () => {
     vehicleNumber: '',
     availableDate: '',
     availableTime: '',
+    foodRequirements: '',
+    familySize: 1,
   });
 
   // Extract role from query parameters
   useEffect(() => {
     const params = new URLSearchParams(location.search);
-    const roleParam = params.get('role') as UserRole;
+    const roleParam = params.get('role') as SignUpRole;
     if (roleParam) {
       setRole(roleParam);
     }
@@ -103,6 +107,7 @@ const SignUp: React.FC = () => {
     
     try {
       setLoading(true);
+      // Convert SignUpRole to UserRole by removing null
       const success = await signUp(formData, role);
       
       if (success) {
@@ -152,7 +157,7 @@ const SignUp: React.FC = () => {
               {roleOptions.map((option) => (
                 <button
                   key={option.id}
-                  onClick={() => setRole(option.id as UserRole)}
+                  onClick={() => setRole(option.id as SignUpRole)}
                   className="w-full flex items-center justify-between p-4 border rounded-md hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-500"
                 >
                   <div className="flex items-center">
@@ -269,26 +274,64 @@ const SignUp: React.FC = () => {
             )}
 
             {role === 'seeker' && (
-              <div>
-                <label htmlFor="userType" className="block text-sm font-medium text-gray-700">
-                  User Type
-                </label>
-                <div className="mt-1">
-                  <select
-                    id="userType"
-                    name="userType"
-                    required
-                    value={formData.userType}
-                    onChange={handleChange}
-                    className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"
-                  >
-                    <option value="individual">Individual</option>
-                    <option value="organization">Organization</option>
-                    <option value="ngo">NGO</option>
-                    <option value="orphanage">Orphanage</option>
-                  </select>
+              <>
+                <div>
+                  <label htmlFor="userType" className="block text-sm font-medium text-gray-700">
+                    User Type
+                  </label>
+                  <div className="mt-1">
+                    <select
+                      id="userType"
+                      name="userType"
+                      required
+                      value={formData.userType}
+                      onChange={handleChange}
+                      className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"
+                    >
+                      <option value="individual">Individual</option>
+                      <option value="organization">Organization</option>
+                      <option value="ngo">NGO</option>
+                      <option value="orphanage">Orphanage</option>
+                    </select>
+                  </div>
                 </div>
-              </div>
+
+                <div>
+                  <label htmlFor="foodRequirements" className="block text-sm font-medium text-gray-700">
+                    Food Requirements
+                  </label>
+                  <div className="mt-1">
+                    <textarea
+                      id="foodRequirements"
+                      name="foodRequirements"
+                      rows={3}
+                      required
+                      value={formData.foodRequirements}
+                      onChange={handleChange}
+                      placeholder="Please specify any dietary restrictions or preferences"
+                      className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="familySize" className="block text-sm font-medium text-gray-700">
+                    Family Size
+                  </label>
+                  <div className="mt-1">
+                    <input
+                      id="familySize"
+                      name="familySize"
+                      type="number"
+                      min="1"
+                      required
+                      value={formData.familySize}
+                      onChange={handleChange}
+                      className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"
+                    />
+                  </div>
+                </div>
+              </>
             )}
 
             {role === 'volunteer' && (

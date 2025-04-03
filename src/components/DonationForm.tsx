@@ -1,18 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { X, Upload, Calendar, MapPin, DollarSign } from 'lucide-react';
-
-// Food type options
-const FOOD_TYPES = [
-  'Vegetables',
-  'Fruits',
-  'Cooked Meals',
-  'Bakery Items',
-  'Canned Goods',
-  'Dairy Products',
-  'Grains & Cereals',
-  'Beverages',
-  'Other'
-];
+import { X, Camera, Calendar, MapPin } from 'lucide-react';
 
 interface DonationFormProps {
   isOpen: boolean;
@@ -23,12 +10,10 @@ interface DonationFormProps {
 const DonationForm: React.FC<DonationFormProps> = ({ isOpen, onClose, onSubmit }) => {
   const [foodImage, setFoodImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [foodType, setFoodType] = useState('');
+  const [foodName, setFoodName] = useState('');
   const [quantity, setQuantity] = useState('');
-  const [quantityUnit, setQuantityUnit] = useState('kg');
   const [location, setLocation] = useState('');
   const [expiryDate, setExpiryDate] = useState('');
-  const [price, setPrice] = useState('');
   const [isDetectingLocation, setIsDetectingLocation] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -50,8 +35,7 @@ const DonationForm: React.FC<DonationFormProps> = ({ isOpen, onClose, onSubmit }
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          // This is just a simulation - in a real app, you would use reverse geocoding
-          setLocation('Detected Location (Coordinates saved)');
+          setLocation(`${position.coords.latitude}, ${position.coords.longitude}`);
           setIsDetectingLocation(false);
         },
         (error) => {
@@ -82,11 +66,11 @@ const DonationForm: React.FC<DonationFormProps> = ({ isOpen, onClose, onSubmit }
     // Create form data object
     const formData = {
       foodImage,
-      foodType,
-      quantity: `${quantity} ${quantityUnit}`,
+      foodName,
+      quantityInPlates: parseInt(quantity),
       location,
       expiryDate,
-      price: price ? parseFloat(price) : undefined
+      timestamp: new Date(),
     };
     
     // Call the onSubmit callback with the form data
@@ -95,12 +79,10 @@ const DonationForm: React.FC<DonationFormProps> = ({ isOpen, onClose, onSubmit }
     // Reset form
     setFoodImage(null);
     setImagePreview(null);
-    setFoodType('');
+    setFoodName('');
     setQuantity('');
-    setQuantityUnit('kg');
     setLocation('');
     setExpiryDate('');
-    setPrice('');
     
     // Close the form
     onClose();
@@ -109,57 +91,53 @@ const DonationForm: React.FC<DonationFormProps> = ({ isOpen, onClose, onSubmit }
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div 
-        className="card-3d bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-2xl w-full overflow-hidden transform transition-all duration-500 ease-in-out"
-        style={{ 
-          transform: 'perspective(1000px) rotateX(0deg)', 
-          transformStyle: 'preserve-3d' 
-        }}
+        className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden transform transition-all duration-500 ease-out"
       >
         {/* Header */}
-        <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Donate Food</h2>
+        <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gradient-to-r from-green-500 to-emerald-600">
+          <h2 className="text-2xl font-bold text-white">Donate Food</h2>
           <button 
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors duration-300"
+            className="text-white/80 hover:text-white transition-colors duration-300"
           >
             <X className="h-6 w-6" />
           </button>
         </div>
         
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 overflow-auto max-h-[70vh]">
+        <form onSubmit={handleSubmit} className="p-6 overflow-auto max-h-[70vh] space-y-6">
           {/* Food Image Upload */}
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
               Food Image
             </label>
-            <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 dark:border-gray-600 border-dashed rounded-md relative hover:border-green-500 dark:hover:border-green-400 transition-colors duration-300 group">
+            <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 dark:border-gray-600 border-dashed rounded-xl relative hover:border-green-500 dark:hover:border-green-400 transition-colors duration-300 group">
               {imagePreview ? (
                 <div className="relative w-full h-48">
                   <img 
                     src={imagePreview} 
                     alt="Food preview" 
-                    className="h-full w-full object-cover rounded-md"
+                    className="h-full w-full object-cover rounded-lg"
                   />
                   <button 
                     type="button"
                     onClick={removeImage}
-                    className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full hover:bg-red-600 transition-colors duration-300"
+                    className="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition-colors duration-300"
                   >
                     <X className="h-4 w-4" />
                   </button>
                 </div>
               ) : (
-                <div className="space-y-1 text-center">
-                  <Upload className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500 group-hover:text-green-500 dark:group-hover:text-green-400 transition-colors duration-300" />
+                <div className="space-y-2 text-center">
+                  <Camera className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500 group-hover:text-green-500 dark:group-hover:text-green-400 transition-colors duration-300" />
                   <div className="flex text-sm text-gray-600 dark:text-gray-400">
                     <label
                       htmlFor="food-image"
                       className="relative cursor-pointer rounded-md font-medium text-green-600 dark:text-green-400 hover:text-green-500 dark:hover:text-green-300 focus-within:outline-none"
                     >
-                      <span>Upload a file</span>
+                      <span>Upload a photo</span>
                       <input
                         id="food-image"
                         ref={fileInputRef}
@@ -180,152 +158,95 @@ const DonationForm: React.FC<DonationFormProps> = ({ isOpen, onClose, onSubmit }
             </div>
           </div>
 
-          {/* Food Type */}
-          <div className="mb-6">
-            <label htmlFor="food-type" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Food Type
+          {/* Food Name */}
+          <div className="space-y-2">
+            <label htmlFor="food-name" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              Food Name
             </label>
-            <select
-              id="food-type"
-              name="food-type"
-              value={foodType}
-              onChange={(e) => setFoodType(e.target.value)}
+            <input
+              type="text"
+              id="food-name"
+              value={foodName}
+              onChange={(e) => setFoodName(e.target.value)}
               required
-              className="form-select block w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white transition-colors duration-300"
-            >
-              <option value="" disabled>Select food type</option>
-              {FOOD_TYPES.map((type) => (
-                <option key={type} value={type}>{type}</option>
-              ))}
-            </select>
+              className="block w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white transition-colors duration-300"
+              placeholder="e.g., Veg Biryani, Chapati with Curry"
+            />
           </div>
 
           {/* Food Quantity */}
-          <div className="mb-6">
-            <label htmlFor="quantity" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Food Quantity
+          <div className="space-y-2">
+            <label htmlFor="quantity" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              Quantity (in plates)
             </label>
-            <div className="flex">
+            <div className="relative">
               <input
                 type="number"
                 id="quantity"
-                name="quantity"
                 value={quantity}
                 onChange={(e) => setQuantity(e.target.value)}
-                min="0"
-                step="0.1"
+                min="1"
+                step="1"
                 required
-                className="form-input block w-full p-3 border border-gray-300 dark:border-gray-600 rounded-l-md shadow-sm focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white transition-colors duration-300"
-                placeholder="Enter quantity"
+                className="block w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white transition-colors duration-300"
+                placeholder="Enter number of plates"
               />
-              <select
-                value={quantityUnit}
-                onChange={(e) => setQuantityUnit(e.target.value)}
-                className="form-select border border-gray-300 dark:border-gray-600 border-l-0 rounded-r-md shadow-sm focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white transition-colors duration-300"
-              >
-                <option value="kg">kg</option>
-                <option value="g">g</option>
-                <option value="lbs">lbs</option>
-                <option value="oz">oz</option>
-                <option value="l">liters</option>
-                <option value="ml">ml</option>
-                <option value="portions">portions</option>
-                <option value="pieces">pieces</option>
-              </select>
             </div>
           </div>
 
           {/* Pickup Location */}
-          <div className="mb-6">
-            <label htmlFor="location" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <div className="space-y-2">
+            <label htmlFor="location" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
               Pickup Location
             </label>
             <div className="relative">
               <input
                 type="text"
                 id="location"
-                name="location"
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
-                className="form-input block w-full p-3 pr-12 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white transition-colors duration-300"
-                placeholder="Enter pickup location"
                 required
+                className="block w-full px-4 py-3 pr-12 rounded-xl border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white transition-colors duration-300"
+                placeholder="Enter pickup location"
               />
               <button
                 type="button"
                 onClick={detectLocation}
                 disabled={isDetectingLocation}
-                className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-500 dark:text-gray-400 hover:text-green-500 dark:hover:text-green-400 transition-colors duration-300"
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-green-500 dark:hover:text-green-400 transition-colors duration-300"
               >
                 <MapPin className="h-5 w-5" />
               </button>
             </div>
-            {isDetectingLocation && (
-              <p className="mt-1 text-sm text-green-500 dark:text-green-400">
-                Detecting your location...
-              </p>
-            )}
           </div>
 
           {/* Expiry Date */}
-          <div className="mb-6">
-            <label htmlFor="expiry-date" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <div className="space-y-2">
+            <label htmlFor="expiry-date" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
               Expiry Date
             </label>
             <div className="relative">
               <input
                 type="date"
                 id="expiry-date"
-                name="expiry-date"
                 value={expiryDate}
                 onChange={(e) => setExpiryDate(e.target.value)}
-                min={new Date().toISOString().split('T')[0]} // Set min to today
                 required
-                className="form-input block w-full p-3 pr-12 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white transition-colors duration-300"
+                min={new Date().toISOString().split('T')[0]}
+                className="block w-full px-4 py-3 pr-12 rounded-xl border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white transition-colors duration-300"
               />
-              <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-gray-500 dark:text-gray-400">
-                <Calendar className="h-5 w-5" />
-              </div>
-            </div>
-          </div>
-
-          {/* Original Price (Optional) */}
-          <div className="mb-6">
-            <label htmlFor="price" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Original Price (Optional)
-            </label>
-            <div className="relative">
-              <input
-                type="number"
-                id="price"
-                name="price"
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
-                min="0"
-                step="0.01"
-                className="form-input block w-full p-3 pl-8 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white transition-colors duration-300"
-                placeholder="0.00"
-              />
-              <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-500 dark:text-gray-400">
-                <DollarSign className="h-4 w-4" />
-              </div>
+              <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" />
             </div>
           </div>
 
           {/* Submit Button */}
-          <div className="flex justify-end mt-8">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 mr-4 transition-colors duration-300"
-            >
-              Cancel
-            </button>
+          <div className="pt-4">
             <button
               type="submit"
-              className="float-on-hover px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-300"
+              className="w-full px-6 py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-medium rounded-xl 
+                       hover:shadow-lg transform transition-all duration-300 hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
             >
-              Donate Now
+              Submit Donation
             </button>
           </div>
         </form>
