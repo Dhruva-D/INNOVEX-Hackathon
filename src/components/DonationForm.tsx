@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
-import { X, Camera, Calendar, MapPin, Phone } from 'lucide-react';
+import { X, Camera, Calendar, MapPin } from 'lucide-react';
+import ConfirmationPopup from './ConfirmationPopup';
 import { DonationFormData } from '../services/donationService';
 
 interface DonationFormProps {
@@ -15,9 +16,10 @@ const DonationForm: React.FC<DonationFormProps> = ({ isOpen, onClose, onSubmit }
   const [quantity, setQuantity] = useState('');
   const [location, setLocation] = useState('');
   const [expiryDate, setExpiryDate] = useState('');
-  const [contactInfo, setContactInfo] = useState('');
+
   const [isDetectingLocation, setIsDetectingLocation] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showConfirmation, setShowConfirmation] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Function to handle image upload
@@ -75,21 +77,27 @@ const DonationForm: React.FC<DonationFormProps> = ({ isOpen, onClose, onSubmit }
         quantityInPlates: parseInt(quantity),
         location,
         expiryDate,
-        contactInfo,
+
         foodImage: foodImage || undefined,
       };
       
       // Call the onSubmit callback with the form data
       await onSubmit(formData);
       
-      // Reset form
-      setFoodImage(null);
-      setImagePreview(null);
-      setFoodName('');
-      setQuantity('');
-      setLocation('');
-      setExpiryDate('');
-      setContactInfo('');
+      // Show confirmation popup
+      setShowConfirmation(true);
+      
+      // Reset form after a delay
+      setTimeout(() => {
+        setFoodImage(null);
+        setImagePreview(null);
+        setFoodName('');
+        setQuantity('');
+        setLocation('');
+        setExpiryDate('');
+        onClose();
+      }, 2000);
+
     } catch (error) {
       console.error('Error submitting donation form:', error);
       alert('Failed to submit donation. Please try again.');
@@ -100,11 +108,28 @@ const DonationForm: React.FC<DonationFormProps> = ({ isOpen, onClose, onSubmit }
 
   if (!isOpen) return null;
 
+  const handleConfirmationClose = () => {
+    setShowConfirmation(false);
+  };
+
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div 
-        className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden transform transition-all duration-500 ease-out"
-      >
+    <>
+      <ConfirmationPopup
+        isOpen={showConfirmation}
+        onClose={handleConfirmationClose}
+        title="Donation Submitted Successfully!"
+        message="Thank you for your generosity. Your food donation has been recorded."
+        donationDetails={{
+          foodName,
+          quantity: parseInt(quantity),
+          location,
+          estimatedTime: '15-30 minutes'
+        }}
+      />
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div 
+          className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden transform transition-all duration-500 ease-out"
+        >
         {/* Header */}
         <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gradient-to-r from-green-500 to-emerald-600">
           <h2 className="text-2xl font-bold text-white">Donate Food</h2>
@@ -249,24 +274,7 @@ const DonationForm: React.FC<DonationFormProps> = ({ isOpen, onClose, onSubmit }
             </div>
           </div>
 
-          {/* Contact Information */}
-          <div className="space-y-2">
-            <label htmlFor="contact-info" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-              Contact Information
-            </label>
-            <div className="relative">
-              <input
-                type="text"
-                id="contact-info"
-                value={contactInfo}
-                onChange={(e) => setContactInfo(e.target.value)}
-                required
-                className="block w-full px-4 py-3 pr-12 rounded-xl border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:text-white transition-colors duration-300"
-                placeholder="Phone number or email"
-              />
-              <Phone className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" />
-            </div>
-          </div>
+
 
           {/* Submit Button */}
           <div className="pt-4">
@@ -281,8 +289,9 @@ const DonationForm: React.FC<DonationFormProps> = ({ isOpen, onClose, onSubmit }
             </button>
           </div>
         </form>
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 
