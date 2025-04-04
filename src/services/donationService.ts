@@ -8,7 +8,6 @@ export interface DonationFormData {
   quantityInPlates: number;
   location: string;
   expiryDate: string;
-
   foodImage?: File;
 }
 
@@ -33,7 +32,6 @@ export const submitDonation = async (donationData: DonationFormData): Promise<Do
     formData.append('quantityInPlates', donationData.quantityInPlates.toString());
     formData.append('location', donationData.location);
     formData.append('expiryDate', donationData.expiryDate);
-
     
     if (donationData.foodImage) {
       formData.append('foodImage', donationData.foodImage);

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Heart, LogOut, User, Sun, Moon, Home, Menu, ChevronDown } from 'lucide-react';
+import { Heart, LogOut, User, Sun, Moon, Home, Menu, ChevronDown, BarChart2 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -61,6 +61,17 @@ const Navbar: React.FC = () => {
   const getUserDashboardLink = () => {
     if (!user) return '/';
     return `/admin-dashboard/${user.userType}`;
+  };
+
+  const getUserStatsLink = () => {
+    if (!user) return '/';
+    
+    switch (user.userType) {
+      case 'donor': return '/stats/donor';
+      case 'seeker': return '/stats/seeker';
+      case 'volunteer': return '/stats/volunteer';
+      default: return '/';
+    }
   };
 
   const getUserRoleLabel = () => {
@@ -140,6 +151,14 @@ const Navbar: React.FC = () => {
                         onClick={() => setIsDropdownOpen(false)}
                       >
                         <Menu className="mr-2 h-4 w-4" /> Dashboard
+                      </Link>
+                      <Link
+                        to={getUserStatsLink()}
+                        className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                        role="menuitem"
+                        onClick={() => setIsDropdownOpen(false)}
+                      >
+                        <BarChart2 className="mr-2 h-4 w-4" /> My Stats
                       </Link>
                       <button
                         onClick={handleSignOut}

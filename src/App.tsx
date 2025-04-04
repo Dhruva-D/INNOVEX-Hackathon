@@ -9,6 +9,10 @@ import DonorDashboard from './pages/dashboard/DonorDashboard';
 import SeekerDashboard from './pages/dashboard/SeekerDashboard';
 import VolunteerDashboard from './pages/dashboard/VolunteerDashboard';
 import AdminDashboard from './pages/dashboard/AdminDashboard';
+import DonorStats from './pages/stats/DonorStats';
+import SeekerStats from './pages/stats/SeekerStats';
+import VolunteerStats from './pages/stats/VolunteerStats';
+import StatsRouter from './pages/stats/StatsRouter';
 
 // Import components
 import ProtectedRoute from './components/ProtectedRoute';
@@ -34,7 +38,7 @@ function App() {
             } 
           />
           <Route 
-            path="/dashboard/seeker" 
+            path="/dashboard/foodseeker" 
             element={
               <ProtectedRoute requiredRole="seeker">
                 <SeekerDashboard />
@@ -46,6 +50,40 @@ function App() {
             element={
               <ProtectedRoute requiredRole="volunteer">
                 <VolunteerDashboard />
+              </ProtectedRoute>
+            } 
+          />
+          
+          {/* Stats Pages Routes */}
+          <Route 
+            path="/stats" 
+            element={
+              <ProtectedRoute>
+                <StatsRouter />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/stats/donor" 
+            element={
+              <ProtectedRoute requiredRole="donor">
+                <DonorStats />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/stats/seeker" 
+            element={
+              <ProtectedRoute requiredRole="seeker">
+                <SeekerStats />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/stats/volunteer" 
+            element={
+              <ProtectedRoute requiredRole="volunteer">
+                <VolunteerStats />
               </ProtectedRoute>
             } 
           />
