@@ -1,6 +1,10 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const router = express.Router();
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+const FoodDonation = require('../models/foodDonationModel');
 
 // @desc    Test database connection
 // @route   GET /api/test/db
@@ -111,5 +115,106 @@ function getReadyStateDescription(state) {
   };
   return states[state] || 'unknown';
 }
+
+// Configure multer for file uploads
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    const uploadDir = 'uploads/';
+    // Create directory if it doesn't exist
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    cb(null, uploadDir);
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + path.extname(file.originalname));
+  },
+});
+
+const upload = multer({ 
+  storage: storage,
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB max size
+  },
+  fileFilter: function (req, file, cb) {
+    const filetypes = /jpeg|jpg|png|gif/;
+    const mimetype = filetypes.test(file.mimetype);
+    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
+
+    if (mimetype && extname) {
+      return cb(null, true);
+    }
+    cb(new Error('Only image files are allowed!'));
+  },
+});
+
+// @desc    Test donation submission (no auth required)
+// @route   POST /api/test/donation
+// @access  Public
+router.post('/donation', upload.single('foodImage'), async (req, res) => {
+  try {
+    console.log('Test donation received:', req.body);
+    
+    // Create a new food donation
+    const newDonation = new FoodDonation({
+      foodName: req.body.foodName,
+      quantityInPlates: req.body.quantityInPlates,
+      location: req.body.location,
+      expiryDate: new Date(req.body.expiryDate),
+      donorId: new mongoose.Types.ObjectId(), // Mock donor ID for testing
+      status: 'available',
+    });
+
+    // Add image URL if an image was uploaded
+    if (req.file) {
+      // For demo, using local storage
+      newDonation.imageUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+    } else {
+      // Use a placeholder image if no image is provided
+      newDonation.imageUrl = `${req.protocol}://${req.get('host')}/uploads/placeholder.jpg`;
+    }
+
+    // Save the donation to the database
+    await newDonation.save();
+
+    // Return success response
+    res.status(201).json({
+      success: true,
+      message: 'Test donation created successfully',
+      _id: newDonation._id,
+      foodName: newDonation.foodName,
+      quantityInPlates: newDonation.quantityInPlates,
+      location: newDonation.location,
+      expiryDate: newDonation.expiryDate,
+      status: newDonation.status,
+      imageUrl: newDonation.imageUrl,
+      timestamp: newDonation.createdAt || new Date()
+    });
+  } catch (error) {
+    console.error('Test donation error:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message,
+      stack: process.env.NODE_ENV === 'production' ? null : error.stack
+    });
+  }
+});
+
+// @desc    Get test donations
+// @route   GET /api/test/donations
+// @access  Public
+router.get('/donations', async (req, res) => {
+  try {
+    const donations = await FoodDonation.find().sort({ createdAt: -1 });
+    res.json(donations);
+  } catch (error) {
+    console.error('Error fetching test donations:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message,
+      stack: process.env.NODE_ENV === 'production' ? null : error.stack
+    });
+  }
+});
 
 module.exports = router; 

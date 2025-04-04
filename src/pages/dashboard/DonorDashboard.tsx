@@ -1,18 +1,70 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from '../../components/Navbar';
 import DonationForm from '../../components/DonationForm';
+import ConfirmationPopup from '../../components/ConfirmationPopup';
+import DonatedFoodsList from '../../components/DonatedFoodsList';
 import { Heart } from 'lucide-react';
+import { submitDonation, getDonorDonations, DonationFormData, DonationResponse } from '../../services/donationService';
 
 const DonorDashboard: React.FC = () => {
   const [isDonationFormOpen, setIsDonationFormOpen] = useState(false);
+  const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
+  const [lastDonation, setLastDonation] = useState<{
+    foodName: string;
+    quantity: number;
+    location: string;
+  } | null>(null);
+  const [donations, setDonations] = useState<DonationResponse[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch donations when component mounts
+  useEffect(() => {
+    fetchDonations();
+  }, []);
+
+  // Function to fetch donations from the API
+  const fetchDonations = async () => {
+    try {
+      setIsLoading(true);
+      const donationsData = await getDonorDonations();
+      setDonations(donationsData);
+    } catch (error) {
+      console.error('Error fetching donations:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleDonateClick = () => {
     setIsDonationFormOpen(true);
   };
 
-  const handleDonationSubmit = (formData: any) => {
-    console.log('Donation form submitted:', formData);
-    alert('Thank you for your donation! Your contribution will help reduce food waste and feed those in need.');
+  const handleDonationSubmit = async (formData: DonationFormData) => {
+    try {
+      // Submit donation to the API
+      await submitDonation(formData);
+      
+      // Store the donation details for the confirmation popup
+      setLastDonation({
+        foodName: formData.foodName,
+        quantity: formData.quantityInPlates,
+        location: formData.location
+      });
+      
+      // Close the donation form
+      setIsDonationFormOpen(false);
+      
+      // Show the confirmation popup
+      setIsConfirmationOpen(true);
+      
+      // Refresh the donations list
+      fetchDonations();
+
+      return Promise.resolve();
+    } catch (error) {
+      console.error('Error submitting donation:', error);
+      return Promise.reject(error);
+    }
   };
 
   return (
@@ -20,7 +72,7 @@ const DonorDashboard: React.FC = () => {
       <Navbar />
       
       {/* Hero Section */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-32">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16">
         <div className="text-center space-y-8">
           <h1 className="text-5xl md:text-6xl font-bold text-gray-900 dark:text-white tracking-tight">
             Make a <span className="text-green-600 dark:text-green-400">Difference</span>
@@ -64,11 +116,25 @@ const DonorDashboard: React.FC = () => {
         </div>
       </div>
 
+      {/* Donated Foods List Section */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-32">
+        <DonatedFoodsList donations={donations} loading={isLoading} />
+      </div>
+
       {/* Donation Form Modal */}
       <DonationForm 
         isOpen={isDonationFormOpen} 
         onClose={() => setIsDonationFormOpen(false)}
         onSubmit={handleDonationSubmit}
+      />
+      
+      {/* Confirmation Popup */}
+      <ConfirmationPopup
+        isOpen={isConfirmationOpen}
+        onClose={() => setIsConfirmationOpen(false)}
+        title="Donation Submitted Successfully!"
+        message="Thank you for your donation! Your contribution will help reduce food waste and feed those in need."
+        donationDetails={lastDonation || undefined}
       />
     </div>
   );
